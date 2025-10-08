@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bug Bash!</title>
+<style>
+  body {
+    background-color: #111;
+    color: #9f9;
+    font-family: "Courier New", monospace;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    margin: 0;
+  }
+
+  h1 {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+  }
+
+  .stats {
+    width: 300px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 1.2rem;
+    margin-bottom: 20px;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, 100px);
+    grid-template-rows: repeat(3, 100px);
+    gap: 15px;
+  }
+
+  .hole {
+    width: 100px;
+    height: 100px;
+    border: 2px solid #555;
+    border-radius: 50%;
+    background-color: #222;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+  }
+
+  .bug {
+    width: 60px;
+    height: 60px;
+    background-color: #7f7;
+    border-radius: 50%;
+    position: relative;
+    transition: transform 0.1s;
+  }
+
+  .bug::before, .bug::after {
+    content: "";
+    position: absolute;
+    width: 10px;
+    height: 20px;
+    background-color: #7f7;
+    top: 10px;
+  }
+
+  .bug::before { left: -12px; }
+  .bug::after { right: -12px; }
+
+  .splat {
+    background-color: #9f9;
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    position: relative;
+    transform: scale(1.3);
+    opacity: 0.6;
+  }
+
+  .hidden {
+    visibility: hidden;
+  }
+
+  .game-over {
+    font-size: 2rem;
+    color: #f55;
+    margin-top: 20px;
+  }
+</style>
+</head>
+<body>
+
+<h1>BUG BASH!</h1>
+<div class="stats">
+  <span id="score">Score: 0</span>
+  <span id="timer">Time: 30</span>
+</div>
+
+<div class="grid" id="grid">
+  <!-- 9 holes -->
+  <div class="hole"></div>
+  <div class="hole"></div>
+  <div class="hole"></div>
+  <div class="hole"></div>
+  <div class="hole"></div>
+  <div class="hole"></div>
+  <div class="hole"></div>
+  <div class="hole"></div>
+  <div class="hole"></div>
+</div>
+
+<div id="gameOver" class="game-over hidden">Game Over!</div>
+
+<script>
+  const holes = document.querySelectorAll(".hole");
+  const scoreDisplay = document.getElementById("score");
+  const timerDisplay = document.getElementById("timer");
+  const gameOverText = document.getElementById("gameOver");
+
+  let score = 0;
+  let timeLeft = 30;
+  let activeBug = null;
+  let bugTimeout;
+  let gameRunning = true;
+
+  function randomHole() {
+    const index = Math.floor(Math.random() * holes.length);
+    return holes[index];
+  }
+
+  function showBug() {
+    if (!gameRunning) return;
+    const hole = randomHole();
+
+    // Create bug element
+    const bug = document.createElement("div");
+    bug.classList.add("bug");
+    hole.appendChild(bug);
+
+    activeBug = bug;
+
+    bug.addEventListener("click", () => {
+      if (!bug.classList.contains("splat")) {
+        bug.classList.add("splat");
+        bug.classList.remove("bug");
+        score += 10;
+        timeLeft += 2;
+        updateStats();
+      }
+    });
+
+    const duration = Math.random() * 1000 + 700;
+    bugTimeout = setTimeout(() => {
+      if (bug.parentNode) hole.removeChild(bug);
+      showBug();
+    }, duration);
+  }
+
+  function updateStats() {
+    scoreDisplay.textContent = `Score: ${score}`;
+    timerDisplay.textContent = `Time: ${timeLeft}`;
+  }
+
+  function countdown() {
+    const interval = setInterval(() => {
+      if (!gameRunning) {
+        clearInterval(interval);
+        return;
+      }
+
+      timeLeft--;
+      updateStats();
+
+      if (timeLeft <= 0) {
+        clearInterval(interval);
+        endGame();
+      }
+    }, 1000);
+  }
+
+  function endGame() {
+    gameRunning = false;
+    clearTimeout(bugTimeout);
+    holes.forEach(h => h.innerHTML = "");
+    gameOverText.classList.remove("hidden");
+  }
+
+  function startGame() {
+    score = 0;
+    timeLeft = 30;
+    updateStats();
+    showBug();
+    countdown();
+  }
+
+  startGame();
+</script>
+
+</body>
+</html>
